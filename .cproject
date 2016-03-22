@@ -30,6 +30,8 @@
 									<listOptionValue builtIn="false" value="/usr/include/eigen3"/>
 									<listOptionValue builtIn="false" value="/home/wei/workspace/slam/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/boost"/>
+									<listOptionValue builtIn="false" value="/usr/include/pcl-1.7"/>
+									<listOptionValue builtIn="false" value="/usr/include/vtk-5.8"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.other.other.1056628767" name="Other flags" superClass="gnu.cpp.compiler.option.other.other" value="-c -fmessage-length=0 -std=c++11" valueType="string"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1918324373" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
@@ -50,6 +52,7 @@
 								</option>
 								<option id="gnu.cpp.link.option.libs.860838594" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="opencv_core"/>
+									<listOptionValue builtIn="false" value="boost_system"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 									<listOptionValue builtIn="false" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" value="opencv_ml"/>
@@ -60,6 +63,9 @@
 									<listOptionValue builtIn="false" value="opencv_contrib"/>
 									<listOptionValue builtIn="false" value="opencv_legacy"/>
 									<listOptionValue builtIn="false" value="opencv_flann"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="pcl_visualization"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="pcl_common"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="pcl_io"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1768306714" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
