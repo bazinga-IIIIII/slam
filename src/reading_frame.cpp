@@ -5,9 +5,7 @@
  *      Author: wei
  */
 #include "rgbdframe.h"
-
-
-#include <opencv2/legacy/legacy.hpp>   //for BruteForceMatcher
+#include <FeatureDetect.h>
 #include <opencv2/core/eigen.hpp>      //for cv2eigen
 
 #include <pcl/io/pcd_io.h>
@@ -18,14 +16,11 @@
 using namespace rgbd_tutor;
 using namespace cv;
 
+
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
 
-struct RESULT_OF_PNP
-{
-	cv::Mat rvec, tvec;
-	int inliers;
-};
+
 
 void computeKeyPointsAndDesp_orb(RGBDFrame::Ptr& frame)
 {
@@ -212,15 +207,20 @@ int main()
 	old_frame = fr.next();
 	computeKeyPointsAndDesp_orb(old_frame);
 	cloud = image2PointCloud(old_frame->rgb, old_frame->depth, camera);
-	pcl::visualization::CloudViewer viewer("Cloud viewer");
+//	pcl::visualization::CloudViewer viewer("Cloud viewer");
+
+	FeatureDetect fd;
 
     while( RGBDFrame::Ptr frame = fr.next() )
     {
-    	computeKeyPointsAndDesp_orb(frame);
-
-        cv::imshow( "image", frame->rgb );
-        cv::waitKey(1);
-
+ //   	computeKeyPointsAndDesp_orb(frame);
+    	fd.Detect_orb(frame);
+    	fd.Match_orb(old_frame, frame, frame->camera);
+    	Mat temp;
+    	drawKeypoints(frame->rgb, frame->keypoints, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
+        cv::imshow( "image", temp);//frame->rgb );
+        cv::waitKey(20);
+/*
         result = estimateMotion_orb(old_frame, frame, camera);
     	if ( result.inliers < min_inliers )
     	{
@@ -249,7 +249,7 @@ int main()
         *newCloud += *output;
         cloud = newCloud;
         viewer.showCloud( cloud );
-
+*/
         old_frame->rgb = frame->rgb.clone();
         old_frame->depth = frame->depth.clone();
         old_frame->descriptor = frame->descriptor.clone();

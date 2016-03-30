@@ -28,9 +28,11 @@ using namespace std;
 #include <Eigen/Geometry>
 
 // OpenCV
+#include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/legacy/legacy.hpp>
 
 // boost
 #include <boost/format.hpp>
@@ -58,6 +60,12 @@ struct CAMERA_INTRINSIC_PARAMETERS
     double d4=0;
 };
 
+
+struct RESULT_OF_PNP
+{
+	cv::Mat rvec, tvec;
+	int inliers;
+};
 
 
 // linux终端的颜色输出
