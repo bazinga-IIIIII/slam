@@ -10,6 +10,9 @@
 FeatureDetect::FeatureDetect() {
 	// TODO Auto-generated constructor stub
 	good_match_threshold = 4.0;
+	min_inliers = 5;
+	keyframe_threshold = 0.1;
+	max_norm = 0.3;
 }
 
 FeatureDetect::~FeatureDetect() {
@@ -41,7 +44,6 @@ RESULT_OF_PNP FeatureDetect::Match_orb(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst,
 	BruteForceMatcher<HammingLUT> matcher;
 	matcher.match(src->descriptor, dst->descriptor, matches);
 
-	cout << "find total " << matches.size() << " matches." << endl;
 	vector< cv::DMatch > goodMatches;
 	double minDis = 9999;
 
@@ -63,19 +65,18 @@ RESULT_OF_PNP FeatureDetect::Match_orb(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst,
 		return result;
 	}
 
-	vector<cv::Point3f> pts_obj;
-	vector< cv::Point2f > pts_img;
+	vector<cv::Point3f> pts_src;
+	vector< cv::Point2f > pts_dst;
 	int flag = 0;
-	for (size_t i = 0; i<goodMatches.size(); i++)
+	for (size_t i = 0; i < goodMatches.size(); i++)
 	{
 		cv::Point2f p = src->keypoints[goodMatches[i].queryIdx].pt;
-		ushort d = src->depth.ptr<ushort>(int(p.y))[int(p.x)];
-		if (d == 0)
+		cv::Point3f pd = src->project2dTo3dLocal(p.x, p.y);
+		if(pd == cv::Point3f(0,0,0))
 			continue;
-		pts_img.push_back(cv::Point2f(dst->keypoints[goodMatches[i].trainIdx].pt));
-		cv::Point3f pt(p.x, p.y, d);
-		cv::Point3f pd = dst->project2dTo3dLocal(pt.x, pt.y);
-		pts_obj.push_back(pd);
+
+		pts_src.push_back(pd);
+		pts_dst.push_back(cv::Point2f(dst->keypoints[goodMatches[i].trainIdx].pt));
 		flag++;
 	}
 
@@ -97,18 +98,11 @@ RESULT_OF_PNP FeatureDetect::Match_orb(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst,
 
 	cv::Mat cameraMatrix(3, 3, CV_64F, camera_matrix_data);
 	cv::Mat rvec, tvec, inliers;
-	cv::solvePnPRansac(pts_obj, pts_img, cameraMatrix, cv::Mat(), rvec, tvec, false, 100, 1.0, 100, inliers);
-
-	cout << "here" << endl;
-	cout << camera_matrix_data[0][0] << endl;
-	cout << rvec << endl;
-	cout << tvec << endl;
-	cout << inliers.rows << endl;
+	cv::solvePnPRansac(pts_src, pts_dst, cameraMatrix, cv::Mat(), rvec, tvec, false, 100, 1.0, 100, inliers);
 
 	result.rvec = rvec;
 	result.tvec = tvec;
 	result.inliers = inliers.rows;
-	cout << result.inliers << endl;
 
 	return result;
 }
@@ -119,4 +113,15 @@ RESULT_OF_PNP FeatureDetect::Match_sift(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst
 
 RESULT_OF_PNP FeatureDetect::Match_surf(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam) {
 	// TODO
+}
+
+int FeatureDetect::Key_Frame_Judge(RESULT_OF_PNP result_of_pnp) {
+	if(result_of_pnp.inliers < min_inliers)
+		return 1;
+
+	double norm = normofTransform(result_of_pnp.rvec, result_of_pnp.tvec);
+	if(norm < keyframe_threshold || norm > max_norm)
+		return 2;
+
+	return 0;
 }

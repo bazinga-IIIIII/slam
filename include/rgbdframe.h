@@ -30,10 +30,10 @@ public:
     cv::Point3f project2dTo3dLocal( const int& u, const int& v  ) const
     {
         if (depth.data == nullptr)
-            return cv::Point3f();
+            return cv::Point3f(0,0,0);
         ushort d = depth.ptr<ushort>(v)[u];
         if (d == 0)
-            return cv::Point3f();
+            return cv::Point3f(0,0,0);
         cv::Point3f p;
         p.z = double( d ) / camera.scale;
         p.x = ( u - camera.cx) * p.z / camera.fx;
