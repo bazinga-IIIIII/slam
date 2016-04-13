@@ -43,7 +43,7 @@ public:
 
 public:
     // 数据成员
-    int id  =-1;            //-1表示该帧不存在
+    int id  = -1;            //-1表示该帧不存在
 
     // 彩色图和深度图
     cv::Mat rgb, depth;
@@ -55,13 +55,14 @@ public:
     vector<cv::KeyPoint>    keypoints;
     cv::Mat                 descriptor;
     vector<cv::Point3f>     kps_3d;
+    Eigen::Vector3d         translation = Eigen::Vector3d::Zero();
+    Eigen::Quaterniond      rotation = Eigen::Quaterniond::Identity();
 
     // 相机
-    // 默认所有的帧都用一个相机模型（难道你还要用多个吗？）
+    // 默认所有的帧都用一个相机模型
     CAMERA_INTRINSIC_PARAMETERS camera;
 
     // BoW回环特征
-    // 讲BoW时会用到，这里先请忽略之
 //    DBoW2::BowVector bowVec;
 
 };

@@ -109,10 +109,14 @@ RESULT_OF_PNP FeatureDetect::Match_orb(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst,
 
 RESULT_OF_PNP FeatureDetect::Match_sift(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam) {
 	// TODO
+	RESULT_OF_PNP result;
+	return result;
 }
 
 RESULT_OF_PNP FeatureDetect::Match_surf(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam) {
 	// TODO
+	RESULT_OF_PNP result;
+	return result;
 }
 
 int FeatureDetect::Key_Frame_Judge(RESULT_OF_PNP result_of_pnp) {
@@ -120,8 +124,10 @@ int FeatureDetect::Key_Frame_Judge(RESULT_OF_PNP result_of_pnp) {
 		return 1;
 
 	double norm = normofTransform(result_of_pnp.rvec, result_of_pnp.tvec);
-	if(norm < keyframe_threshold || norm > max_norm)
+	if(norm < keyframe_threshold)
 		return 2;
+	if(norm > max_norm)
+		return 3;
 
 	return 0;
 }

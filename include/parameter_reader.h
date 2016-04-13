@@ -25,7 +25,7 @@ public:
             // 看看上级目录是否有这个文件 ../parameter.txt
         	const string& filename1 = "../parameters.txt";
 //          fin.open("."+filename);
-        	fin.open(filename.c_str());
+        	fin.open(filename1.c_str());
             if (!fin)
             {
                 cerr<<"没有找到对应的参数文件："<<filename<<endl;

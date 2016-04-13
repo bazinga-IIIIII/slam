@@ -5,7 +5,8 @@
  *      Author: wei
  */
 #include "rgbdframe.h"
-#include <FeatureDetect.h>
+#include "Transform.h"
+#include "FeatureDetect.h"
 #include <opencv2/core/eigen.hpp>      //for cv2eigen
 
 #include <pcl/io/pcd_io.h>
@@ -19,34 +20,6 @@ using namespace cv;
 
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
-
-
-void use_eigen_tran(RESULT_OF_PNP result, Eigen::Isometry3d &T)
-{
-	T = Eigen::Isometry3d::Identity();
-	cv::Mat R;
-	cv::Rodrigues(result.rvec, R);
-	Eigen::Matrix3d r;
-	cv::cv2eigen(R, r);
-	Eigen::AngleAxisd angle(r);
-	//cout << "translation" << endl;
-	//cout <<"0: "<< result.tvec.at<double>(0, 0) << endl;
-	//cout <<"1: " << result.tvec.at<double>(1, 0) << endl;
-	//cout <<"2: " << result.tvec.at<double>(2, 0) << endl;
-	//double a, b, c;
-	//a = result.tvec.at<double>(0, 0);
-	//b = result.tvec.at<double>(1, 0);
-	//c = result.tvec.at<double>(2, 0);
-//	Eigen::Translation<double, 3> trans(a,b,c);
-//	Eigen::Translation<double, 3> trans(result.tvec.at<double>(0, 0), result.tvec.at<double>(0, 1), result.tvec.at<double>(0, 2));
-	T = angle;
-	T(0, 3) = result.tvec.at<double>(0, 0);
-	T(1, 3) = result.tvec.at<double>(1, 0);
-	T(2, 3) = result.tvec.at<double>(2, 0);
-	//T(1, 3) = result.tvec.at<double>(0, 1);
-	//T(2, 3) = result.tvec.at<double>(0, 2);
-}
-
 
 
 PointCloud::Ptr image2PointCloud(cv::Mat& rgb, cv::Mat& depth, CAMERA_INTRINSIC_PARAMETERS& camera)
@@ -96,29 +69,46 @@ int main()
     camera = para.getCamera();
 	RESULT_OF_PNP result;
 	Eigen::Isometry3d T = Eigen::Isometry3d::Identity();
+	Eigen::Quaterniond q;
 	PointCloud::Ptr cloud;
 	PointCloud::Ptr output(new PointCloud());
 
 	FeatureDetect fd;
+	Transform tf;
+
 
 	old_frame = fr.next();
 	fd.Detect_orb(old_frame);
+	Eigen::Matrix3d m;
+	tf.Matrix9ToQuaternion(m);
+
 	cloud = image2PointCloud(old_frame->rgb, old_frame->depth, camera);
 //	pcl::visualization::CloudViewer viewer("Cloud viewer");
 
     while( RGBDFrame::Ptr frame = fr.next() )
     {
+//    	break;
     	fd.Detect_orb(frame);
     	fd.Match_orb(old_frame, frame, frame->camera);
     	Mat temp;
     	drawKeypoints(frame->rgb, frame->keypoints, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
         cv::imshow( "image", temp);//frame->rgb );
-        cv::waitKey(20);
+        cv::waitKey(1);
 
         result = fd.Match_orb(old_frame, frame, camera);
+//      cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
         if(!fd.Key_Frame_Judge(result)) {
-        	cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
-           	use_eigen_tran(result,T);
+        	tf.GetFrameTransform(*frame, *old_frame, result);
+ //       	tf.PrintQuar(frame->rotation);
+  //      	cout << frame->translation << endl;
+ //       	Eigen::Matrix4d temp = tf.PnpoutputToMatrix4d(result);
+ //       	frame->rotation = tf.Matrix16ToQuaternion(temp);
+//        	cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+ //       	T = tf.PnpoutputToIsometry(result);
+ //       	tf.IsometryToMatrix4d(T);
+  //      	q = tf.Matrix16ToQuaternion(T);
+        	cout << frame->translation << endl;
+        	tf.PrintQuar(frame->rotation);
         }
         else
         	continue;
@@ -138,6 +128,8 @@ int main()
 */
         old_frame->rgb = frame->rgb.clone();
         old_frame->depth = frame->depth.clone();
+        old_frame->rotation = frame->rotation;
+        old_frame->translation = frame->translation;
         old_frame->descriptor = frame->descriptor.clone();
        	old_frame->keypoints.clear();
        	for(int i = 0; i < frame->keypoints.size(); i++) {
