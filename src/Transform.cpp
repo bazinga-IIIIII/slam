@@ -9,7 +9,6 @@
 
 Transform::Transform() {
 	// TODO Auto-generated constructor stub
-
 }
 
 Transform::~Transform() {
@@ -91,8 +90,9 @@ void Transform::GetFrameTransform(RGBDFrame &frame, RGBDFrame &old_frame, RESULT
 	m = PnpoutputToMatrix4d(result);
 	Eigen::Matrix4d m_old;
 	m_old = TransformToMatrix4d(old_frame.translation, old_frame.rotation);
-	frame.rotation = Matrix16ToQuaternion(m * m_old);
+	frame.rotation = Matrix16ToQuaternion(m * m_old);//P2 = T * P1
 	frame.translation = Matrix16ToTranslation(m * m_old);
+
 }
 
 void Transform::PrintQuar(Eigen::Quaterniond q) {

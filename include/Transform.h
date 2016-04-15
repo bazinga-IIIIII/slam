@@ -34,6 +34,8 @@ public:
 
 	void PrintQuar(Eigen::Quaterniond q);
 	void PrintIsometry(Eigen::Isometry3d T);
+
+//	FILE *fp;
 };
 
 #endif /* TRANSFORM_H_ */

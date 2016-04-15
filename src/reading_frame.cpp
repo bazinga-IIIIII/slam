@@ -76,7 +76,6 @@ int main()
 	FeatureDetect fd;
 	Transform tf;
 
-
 	old_frame = fr.next();
 	fd.Detect_orb(old_frame);
 	Eigen::Matrix3d m;
@@ -96,9 +95,13 @@ int main()
         cv::waitKey(1);
 
         result = fd.Match_orb(old_frame, frame, camera);
-//      cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+
         if(!fd.Key_Frame_Judge(result)) {
+            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
         	tf.GetFrameTransform(*frame, *old_frame, result);
+ //       	cout << fr.rgbFiles[frame->id] << endl;
+        	fr.FrameWriter(*frame);
+ //           cout << rgbFiles[currentIndex] << endl;
  //       	tf.PrintQuar(frame->rotation);
   //      	cout << frame->translation << endl;
  //       	Eigen::Matrix4d temp = tf.PnpoutputToMatrix4d(result);
@@ -107,8 +110,8 @@ int main()
  //       	T = tf.PnpoutputToIsometry(result);
  //       	tf.IsometryToMatrix4d(T);
   //      	q = tf.Matrix16ToQuaternion(T);
-        	cout << frame->translation << endl;
-        	tf.PrintQuar(frame->rotation);
+  //      	cout << frame->translation << endl;
+ //       	tf.PrintQuar(frame->rotation);
         }
         else
         	continue;

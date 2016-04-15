@@ -72,10 +72,17 @@ public:
 class FrameReader
 {
 public:
+	vector<string>  rgbTimes, depthTimes;
+	void FrameWriter(RGBDFrame frame);
+	FILE *fp;
     FrameReader( const rgbd_tutor::ParameterReader& para )
         : parameterReader( para )
     {
         init_tum( );
+    	fp=fopen("/home/wei/workspace/slam/pose","r+");
+    	if(fp == NULL)
+    		cout << "Open file error!" << endl;
+        ofstream out("/home/wei/workspace/slam/pose");
     }
 
     // 获得下一帧
