@@ -41,6 +41,20 @@ public:
         return p;
     }
 
+    cv::Point3f project2dTo3dLocal1( const int& u, const int& v, CAMERA_INTRINSIC_PARAMETERS camera1) const
+    {
+        if (depth.data == nullptr)
+            return cv::Point3f(0,0,0);
+        ushort d = depth.ptr<ushort>(v)[u];
+        if (d == 0)
+            return cv::Point3f(0,0,0);
+        cv::Point3f p;
+        p.z = double( d ) / camera1.scale;
+        p.x = ( u - camera1.cx) * p.z / camera1.fx;
+        p.y = ( v - camera1.cy) * p.z / camera1.fy;
+        return p;
+    }
+
 public:
     // 数据成员
     int id  = -1;            //-1表示该帧不存在

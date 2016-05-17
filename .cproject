@@ -25,6 +25,10 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1833305268" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1694771271" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/usr/local/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/include/EXTERNAL/csparse"/>
+									<listOptionValue builtIn="false" value="/usr/local/include/g2o"/>
+									<listOptionValue builtIn="false" value="/usr/local/include/EXTERNAL"/>
+									<listOptionValue builtIn="false" value="/home/wei/libfreenect2/include"/>
 									<listOptionValue builtIn="false" value="/usr/local/include/opencv"/>
 									<listOptionValue builtIn="false" value="/usr/local/include/opencv2"/>
 									<listOptionValue builtIn="false" value="/usr/include/eigen3"/>
@@ -52,6 +56,24 @@
 								</option>
 								<option id="gnu.cpp.link.option.libs.860838594" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="opencv_core"/>
+									<listOptionValue builtIn="false" value="g2o_core"/>
+									<listOptionValue builtIn="false" value="g2o_stuff"/>
+									<listOptionValue builtIn="false" value="g2o_ext_csparse"/>
+									<listOptionValue builtIn="false" value="g2o_csparse_extension"/>
+									<listOptionValue builtIn="false" value="g2o_solver_csparse"/>
+									<listOptionValue builtIn="false" value="g2o_cli"/>
+									<listOptionValue builtIn="false" value="g2o_types_sim3"/>
+									<listOptionValue builtIn="false" value="g2o_types_icp"/>
+									<listOptionValue builtIn="false" value="g2o_types_data"/>
+									<listOptionValue builtIn="false" value="g2o_solver_dense"/>
+									<listOptionValue builtIn="false" value="g2o_solver_eigen"/>
+									<listOptionValue builtIn="false" value="g2o_solver_pcg"/>
+									<listOptionValue builtIn="false" value="g2o_types_slam3d"/>
+									<listOptionValue builtIn="false" value="g2o_types_slam3d_addons"/>
+									<listOptionValue builtIn="false" value="g2o_parser"/>
+									<listOptionValue builtIn="false" value="g2o_interface"/>
+									<listOptionValue builtIn="false" value="g2o_types_sba"/>
+									<listOptionValue builtIn="false" value="freenect2"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 									<listOptionValue builtIn="false" value="opencv_highgui"/>
@@ -63,9 +85,9 @@
 									<listOptionValue builtIn="false" value="opencv_contrib"/>
 									<listOptionValue builtIn="false" value="opencv_legacy"/>
 									<listOptionValue builtIn="false" value="opencv_flann"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="pcl_visualization"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="pcl_common"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="pcl_io"/>
+									<listOptionValue builtIn="false" value="pcl_visualization"/>
+									<listOptionValue builtIn="false" value="pcl_common"/>
+									<listOptionValue builtIn="false" value="pcl_io"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1768306714" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
