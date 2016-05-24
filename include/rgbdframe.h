@@ -30,10 +30,10 @@ public:
     cv::Point3f project2dTo3dLocal( const int& u, const int& v  ) const
     {
         if (depth.data == nullptr)
-            return cv::Point3f();
+            return cv::Point3f(0,0,0);
         ushort d = depth.ptr<ushort>(v)[u];
         if (d == 0)
-            return cv::Point3f();
+            return cv::Point3f(0,0,0);
         cv::Point3f p;
         p.z = double( d ) / camera.scale;
         p.x = ( u - camera.cx) * p.z / camera.fx;
@@ -41,9 +41,23 @@ public:
         return p;
     }
 
+    cv::Point3f project2dTo3dLocal1( const int& u, const int& v, CAMERA_INTRINSIC_PARAMETERS camera1) const
+    {
+        if (depth.data == nullptr)
+            return cv::Point3f(0,0,0);
+        ushort d = depth.ptr<ushort>(v)[u];
+        if (d == 0)
+            return cv::Point3f(0,0,0);
+        cv::Point3f p;
+        p.z = double( d ) / camera1.scale;
+        p.x = ( u - camera1.cx) * p.z / camera1.fx;
+        p.y = ( v - camera1.cy) * p.z / camera1.fy;
+        return p;
+    }
+
 public:
     // 数据成员
-    int id  =-1;            //-1表示该帧不存在
+    int id  = -1;            //-1表示该帧不存在
 
     // 彩色图和深度图
     cv::Mat rgb, depth;
@@ -55,13 +69,14 @@ public:
     vector<cv::KeyPoint>    keypoints;
     cv::Mat                 descriptor;
     vector<cv::Point3f>     kps_3d;
+    Eigen::Vector3d         translation = Eigen::Vector3d::Zero();
+    Eigen::Quaterniond      rotation = Eigen::Quaterniond::Identity();
 
     // 相机
-    // 默认所有的帧都用一个相机模型（难道你还要用多个吗？）
+    // 默认所有的帧都用一个相机模型
     CAMERA_INTRINSIC_PARAMETERS camera;
 
     // BoW回环特征
-    // 讲BoW时会用到，这里先请忽略之
 //    DBoW2::BowVector bowVec;
 
 };
@@ -71,10 +86,17 @@ public:
 class FrameReader
 {
 public:
+	vector<string>  rgbTimes, depthTimes;
+	void FrameWriter(RGBDFrame frame);
+	FILE *fp;
     FrameReader( const rgbd_tutor::ParameterReader& para )
         : parameterReader( para )
     {
         init_tum( );
+    	fp=fopen("/home/wei/workspace/slam/pose","r+");
+    	if(fp == NULL)
+    		cout << "Open file error!" << endl;
+        ofstream out("/home/wei/workspace/slam/pose");
     }
 
     // 获得下一帧

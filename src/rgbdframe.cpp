@@ -31,6 +31,15 @@ RGBDFrame::Ptr   FrameReader::next()
     return frame;
 }
 
+void FrameReader::FrameWriter(RGBDFrame frame) {
+	fp=fopen("/home/wei/workspace/slam/pose","a+");
+	if(fp == NULL)
+		cout << "Open file error!" << endl;
+	fprintf(fp,"%s %lf %lf %lf %lf %lf %lf %lf\n",depthTimes[frame.id].c_str(), frame.translation(0),frame.translation(1),frame.translation(2),
+			frame.rotation.w(),frame.rotation.x(),frame.rotation.y(),frame.rotation.z());
+	fclose(fp);
+}
+
 void FrameReader::init_tum( )
 {
     dataset_dir = parameterReader.getData<string>("data_source");
@@ -53,6 +62,8 @@ void FrameReader::init_tum( )
         }
         rgbFiles.push_back( rgbFile );
         depthFiles.push_back( depthFile );
+        rgbTimes.push_back(rgbTime);
+		depthTimes.push_back(depthTime);
     }
 
     cout<<"一共找着了"<<rgbFiles.size()<<"个数据记录哦！"<<endl;
