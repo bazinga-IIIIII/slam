@@ -42,21 +42,18 @@ using namespace cv;
 using namespace g2o;
 
 
-//g2o::SparseOptimizer m_globalOptimizer;
-g2o::SparseOptimizer m_globalOptimizer1;
-/*
+g2o::SparseOptimizer m_globalOptimizer;
+
 typedef BlockSolver_6_3 SlamBlockSolver;
 typedef LinearSolverCSparse< BlockSolver_6_3::PoseMatrixType > SlamLinearSolver;
 
-	SlamLinearSolver* linearSolver;
-	SlamBlockSolver* blockSolver;
-	OptimizationAlgorithmLevenberg* solver;
-/////// 		SparseOptimizer m_globalOptimizer;
-	VertexSE3* v;
-	Eigen::Matrix<double, 6, 6> information;
+SlamLinearSolver* linearSolver;
+SlamBlockSolver* blockSolver;
+OptimizationAlgorithmLevenberg* solver;
+VertexSE3* v;
+Eigen::Matrix<double, 6, 6> information;
 
-void init_g2o()
-{
+void init_g2o() {
 	linearSolver = new SlamLinearSolver();
 	linearSolver->setBlockOrdering( false );
 	blockSolver = new SlamBlockSolver( linearSolver );
@@ -69,13 +66,22 @@ void init_g2o()
 	v->setEstimate( Eigen::Isometry3d::Identity() );
 	v->setFixed( true );
 	m_globalOptimizer.addVertex( v );
-	}
-*/
+
+    information(0,0) = information(1,1) = information(2,2) = 100;
+    information(3,3) = information(4,4) = information(5,5) = 100;
+}
+/**/
 
 
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PointCloud;
 
+struct for_g2o
+{
+	Mat rgb;
+	Mat depth;
+	int id;
+};
 
 PointCloud::Ptr image2PointCloud(cv::Mat& rgb, cv::Mat& depth, CAMERA_INTRINSIC_PARAMETERS& camera)
 {
@@ -84,29 +90,21 @@ PointCloud::Ptr image2PointCloud(cv::Mat& rgb, cv::Mat& depth, CAMERA_INTRINSIC_
 	for (int m = 0; m < depth.rows; m++)
 		for (int n = 0; n < depth.cols; n++)
 		{
-			// »ñÈ¡Éî¶ÈÍŒÖÐ(m,n)ŽŠµÄÖµ
 			ushort d = depth.ptr<ushort>(m)[n];
-			// d ¿ÉÄÜÃ»ÓÐÖµ£¬ÈôÈçŽË£¬Ìø¹ýŽËµã
 			if (d == 0)
 				continue;
-			// d ŽæÔÚÖµ£¬ÔòÏòµãÔÆÔöŒÓÒ»žöµã
 			PointT p;
 
-			// ŒÆËãÕâžöµãµÄ¿ÕŒä×ø±ê
 			p.z = double(d) / camera.scale;
 			p.x = (n - camera.cx) * p.z / camera.fx;
 			p.y = (m - camera.cy) * p.z / camera.fy;
 
-			// ŽÓrgbÍŒÏñÖÐ»ñÈ¡ËüµÄÑÕÉ«
-			// rgbÊÇÈýÍšµÀµÄBGRžñÊœÍŒ£¬ËùÒÔ°ŽÏÂÃæµÄË³Ðò»ñÈ¡ÑÕÉ«
 			p.b = rgb.ptr<uchar>(m)[n * 3];
 			p.g = rgb.ptr<uchar>(m)[n * 3 + 1];
 			p.r = rgb.ptr<uchar>(m)[n * 3 + 2];
 
-			// °ÑpŒÓÈëµœµãÔÆÖÐ
 			cloud->points.push_back(p);
 		}
-	// ÉèÖÃ²¢±£ŽæµãÔÆ
 	cloud->height = 1;
 	cloud->width = cloud->points.size();
 	cloud->is_dense = false;
@@ -127,6 +125,7 @@ int temp1()//int main()
 	Eigen::Quaterniond q;
 	PointCloud::Ptr cloud;
 	PointCloud::Ptr output(new PointCloud());
+
 
 	FeatureDetect fd;
 	Transform tf;
@@ -319,13 +318,28 @@ int main() {
 	libfreenect2::Frame undistorted(512, 424, 4), registered(512, 424, 4);
 	/// [registration setup]
 
+	cout << dev->getColorCameraParams().cx << endl;
+	cout << dev->getIrCameraParams().cx << endl;
+	cout << dev->getIrCameraParams().cy << endl;
+	cout << dev->getIrCameraParams().fx << endl;
+	cout << dev->getIrCameraParams().fy << endl;
+
 	size_t framecount = 0;
 
-//	init_g2o();
+	init_g2o();
+
+	vector<PointCloud::Ptr> v_cloud;
+
+    vector<for_g2o> zz;
+    for_g2o cs;
+    int keyframe_flag = 1;
 
 	Mat rgb_image(1080, 1920, CV_8UC4);
-	Mat depth_image(424, 512, CV_32FC1);
+	Mat depth_image(424, 512, CV_16UC1);
+	Mat depth_image1(424, 512, CV_32FC1);
 	Mat rgb_image1, rgb_image2;
+	Mat t1(424, 512, CV_8UC1);
+	Mat t2;
 
 	////////////////////////////////////////////////////////////////////////////////////////add
 	int start_flag = 1;
@@ -339,10 +353,10 @@ int main() {
 
 
     CAMERA_INTRINSIC_PARAMETERS camera;
-    camera.cx = 261.696594;
-    camera.cy = 202.522202;
-    camera.fx = 368.096588;
-    camera.fy = 368.096588;
+    camera.cx = 258.801;
+    camera.cy = 207/629;
+    camera.fx = 364.878;
+    camera.fy = 364.878;
     camera.scale=1000.0;
 
 
@@ -365,26 +379,57 @@ int main() {
 			/// [registration]
 		}
 
+
+		t2.cols = registered.width;
+		t2.rows = registered.height;
+		t2.data = registered.data;
+
+		imshow("t2", t2);
+
+
+
+
 		rgb_image.cols = rgb->width;
 		rgb_image.rows = rgb->height;
 		rgb_image.data = rgb->data;
 //		imshow("rgb", rgb_image);
 
 
-		depth_image.cols = depth->width;
-		depth_image.rows = depth->height;
-		depth_image.data = depth->data;
-		imshow("depth",depth_image);
+		depth_image1.cols = depth->width;
+		depth_image1.rows = depth->height;
+		depth_image1.data = depth->data;
+		imshow("depth",depth_image1);
+
+
+		for(int i=0;i<depth_image1.rows;i++)
+				for(int j=0;j<depth_image1.cols;j++)
+					depth_image.at<short>(i,j) = depth_image1.at<float>(i,j);
+
+		imshow("depth1",depth_image);
+
+		for(int i=0;i<t2.rows;i++)
+				for(int j=0;j<t2.cols;j++)
+					t1.at<uchar>(i,j) = depth_image1.at<float>(i,j);
+		imshow("t1", t1);
 
 		resize(rgb_image, rgb_image1, Size(512,424), 512/1920, 424/1080, INTER_AREA);
 		cvtColor(rgb_image1, rgb_image2, CV_BGRA2BGR);
 		imshow("rgb1",rgb_image2);
 		waitKey(10);
 
+		if(keyframe_flag > 35)
+			break;
 
 		if(start_flag) {
 	        old_frame->rgb = rgb_image2.clone();
 	        old_frame->depth = depth_image.clone();
+
+//	        cs.rgb = old_frame->rgb;
+//	        cs.depth = old_frame->depth;
+//	        cs.id = 1;
+//	        zz.push_back(cs);
+	        v_cloud.push_back(image2PointCloud(old_frame->rgb, old_frame->depth, camera));
+
 	    	fd.Detect_orb(old_frame);
 	        start_flag = 0;
 		}
@@ -400,10 +445,45 @@ int main() {
 
 	        result = fd.Match_orb(old_frame, frame, camera);
 	        int result_k = fd.Key_Frame_Judge(result);
-	        cout << "k   " << result_k << endl;
+//	        cout << "k   " << result_k << endl;
 	        if(!result_k) {
 //	            cout << "lalalalalal  " << fd.Key_Frame_Judge(result) << endl;
 	        	tf.GetFrameTransform(*frame, *old_frame, result);
+
+	        	keyframe_flag++;
+//		        cs.rgb = frame->rgb;
+//		        cs.depth = frame->depth;
+//		        cs.id = keyframe_flag;
+//		        zz.push_back(cs);
+	        	v_cloud.push_back(image2PointCloud(frame->rgb, frame->depth, camera));
+
+		        VertexSE3* rd_v = new g2o::VertexSE3();
+		        EdgeSE3* rd_edge = new g2o::EdgeSE3();
+
+	            rd_v->setId(keyframe_flag);
+	            rd_v->setEstimate(Eigen::Isometry3d::Identity());
+	            m_globalOptimizer.addVertex(rd_v);
+
+	            rd_edge->vertices()[0] = m_globalOptimizer.vertex(keyframe_flag-1);//(m_kpkeyframe.size() - 1);
+	            rd_edge->vertices()[1] = m_globalOptimizer.vertex(keyframe_flag);
+	            static g2o::RobustKernel* robustKernel = g2o::RobustKernelFactory::instance()->construct( "Cauchy" );
+	            rd_edge->setRobustKernel(robustKernel);
+
+	            rd_edge->setInformation(information);
+
+	            Eigen::Isometry3d m_parament = Eigen::Isometry3d::Identity();
+	            m_parament = tf.PnpoutputToIsometry(result);
+	            rd_edge->setMeasurement(m_parament);
+	            m_globalOptimizer.addEdge(rd_edge);
+
+
+	            cout<<"optimizing pose graph, vertices: "<<m_globalOptimizer.vertices().size()<<endl;
+	            m_globalOptimizer.save("result_before.g2o");
+	            m_globalOptimizer.initializeOptimization();
+	            m_globalOptimizer.optimize( 100 ); //可以指定优化步数
+	            m_globalOptimizer.save( "result_after.g2o" );
+	            cout<<"Optimization done."<<endl;
+/**/
 
 		        old_frame->rgb = frame->rgb.clone();
 		        old_frame->depth = frame->depth.clone();
@@ -437,6 +517,43 @@ int main() {
 	dev->stop();
 	dev->close();
 	/// [stop]
+
+
+	pcl::visualization::CloudViewer viewer("Cloud viewer");
+	PointCloud::Ptr cloud(new PointCloud());
+	PointCloud::Ptr newCloud(new PointCloud());
+	PointCloud::Ptr output(new PointCloud());
+
+	int i;
+	for(i=0;i<35;i++) {
+		VertexSE3* vertex = dynamic_cast<VertexSE3*>(m_globalOptimizer.vertex(i+1));
+		Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
+		pose = vertex -> estimate();
+		cout << pose.matrix() << endl;
+		cout << v_cloud.size() << endl;
+
+		newCloud = v_cloud[i];
+		pcl::transformPointCloud( *newCloud, *newCloud, pose.matrix() );
+		*output += *newCloud;
+/*		if ( i == 0 )
+		{
+			output->clear();
+			*newCloud = *v_cloud[i];
+//			pcl::transformPointCloud(*newCloud, *output, pose.matrix());
+		}
+		else
+		{
+			newCloud = v_cloud[i];
+			pcl::transformPointCloud(*output, *output, pose.matrix());
+			*output += *newCloud;
+		}
+*/
+
+	}
+	viewer.showCloud( newCloud );
+	while(1)
+	{}
+
 
 	delete registration;
 
