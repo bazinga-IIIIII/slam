@@ -10,6 +10,7 @@
 #include <opencv2/core/eigen.hpp>      //for cv2eigen
 //#include <opencv2/imgproc/imgproc.hpp>
 
+
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
@@ -36,6 +37,10 @@
 #include <g2o/core/robust_kernel_factory.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
 #include <g2o/core/marginal_covariance_cholesky.h>
+
+#include <Ferns.h>
+
+
 
 using namespace rgbd_tutor;
 using namespace cv;
@@ -113,7 +118,7 @@ PointCloud::Ptr image2PointCloud(cv::Mat& rgb, cv::Mat& depth, CAMERA_INTRINSIC_
 }
 
 
-int temp1()//int main()
+int main()//int main()
 {
     ParameterReader para;
     FrameReader     fr(para);
@@ -129,6 +134,16 @@ int temp1()//int main()
 
 	FeatureDetect fd;
 	Transform tf;
+	Ferns ferns(500, 7000, 0.2);//500颗随机蕨。深度值上限7000mm。阈值0.2
+
+//	ferns.Ferns;
+/*
+	cout << "init ferns successed!" << endl;
+	cout << ferns.conservatory.at(100).pos << endl;
+	cout << ferns.conservatory.at(100).rgbd << endl;
+	cout << ferns.conservatory.at(200).pos << endl;
+	cout << ferns.conservatory.at(200).rgbd << endl;
+*/
 
 	old_frame = fr.next();
 	fd.Detect_orb(old_frame);
@@ -138,7 +153,15 @@ int temp1()//int main()
 	cloud = image2PointCloud(old_frame->rgb, old_frame->depth, camera);
 //	pcl::visualization::CloudViewer viewer("Cloud viewer");
 
+
     while( RGBDFrame::Ptr frame = fr.next() )
+    {
+    	ferns.addFrame(frame, 0.4);
+ //   	cout << "frame" << endl;
+    }
+    cout << "end" << endl;
+    cout << ferns.frames.size() << endl;
+    while( RGBDFrame::Ptr frame = fr.next())
     {
 //    	break;
     	fd.Detect_orb(frame);
@@ -149,9 +172,9 @@ int temp1()//int main()
         cv::waitKey(1);
 
         result = fd.Match_orb(old_frame, frame, camera);
-
+        cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
         if(!fd.Key_Frame_Judge(result)) {
-            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+//            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
         	tf.GetFrameTransform(*frame, *old_frame, result);
  //       	cout << fr.rgbFiles[frame->id] << endl;
         	fr.FrameWriter(*frame);
@@ -226,7 +249,7 @@ void sigusr1_handler(int s)
 	/// [pause]
 }
 
-int main() {
+int temp2() {  //main function robocup@home demo
 	/// [context]
 	libfreenect2::Freenect2 freenect2;
 	libfreenect2::Freenect2Device *dev = 0;
