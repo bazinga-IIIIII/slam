@@ -109,7 +109,8 @@ bool Ferns::addFrame(RGBDFrame::Ptr i_frame, const float threshold)
     delete [] coOccurrences;
 //    cout << minimum << endl;
 
-    if((minimum > threshold || frames.size() == 0) && frame->goodCodes > 0)     //在goodcode>0即帧有效的情况下，首帧和dissim大于与阈值的帧将会被push进容器
+//    if((minimum > threshold || frames.size() == 0) && frame->goodCodes > 0)
+    if(frame->goodCodes > 0)     //在goodcode>0即帧有效的情况下，首帧和dissim大于与阈值的帧将会被push进容器
     {
         for(int i = 0; i < num; i++)						//然后将新添加帧的帧号 push到 有效蕨的ids容器中
         {
@@ -134,7 +135,7 @@ bool Ferns::addFrame(RGBDFrame::Ptr i_frame, const float threshold)
 }
 
 
-Eigen::Matrix4f Ferns::findFrame(RGBDFrame::Ptr i_frame)
+int Ferns::findFrame(RGBDFrame::Ptr i_frame)
 {
     lastClosest = -1;
     Frame * frame = new Frame(num, frames.size(), i_frame->id);
@@ -169,13 +170,13 @@ Eigen::Matrix4f Ferns::findFrame(RGBDFrame::Ptr i_frame)
     float minimum = std::numeric_limits<float>::max();
     int minId = -1;
 
-    for(size_t i = 0; i < frames.size(); i++)
+    for(size_t i = 0; i < frames.size()-1; i++)
     {
         float maxCo = std::min(frame->goodCodes, frames.at(i)->goodCodes);
 
         float dissim = (float)(maxCo - coOccurrences[i]) / (float)maxCo;
 
-        if(dissim < minimum && 1==2)//time - frames.at(i)->srcTime > 300)    //查找差异度最小的帧，300ms以内的帧不考虑，差异最小帧帧号赋值给minID
+        if(dissim < minimum )//&& 1==2)//time - frames.at(i)->srcTime > 300)    //查找差异度最小的帧，300ms以内的帧不考虑，差异最小帧帧号赋值给minID
         {
             minimum = dissim;
             minId = i;
@@ -186,14 +187,18 @@ Eigen::Matrix4f Ferns::findFrame(RGBDFrame::Ptr i_frame)
 
     Eigen::Matrix4f estPose = Eigen::Matrix4f::Identity();
 									//blockHDAware返回值【0,1】，数值越大，相似度越高
+//    cout << "minID:" << minId << endl;
+//    cout << "global_ID:" << frames.at(minId)->global_id << endl;
     if(minId != -1 && blockHDAware(frame, frames.at(minId)) > 0.3)      //差异最小帧帧号非空，并且块间汉明距离大于阈值，blabla
     {
-//        Eigen::Matrix4f fernPose = frames.at(minId)->pose;
+    	delete frame;
+    	return minId;
     }
-
-    delete frame;
-
-    return estPose;
+    else {
+    	delete frame;
+    	return -1;
+    }
+//    delete frame;
 }
 
 

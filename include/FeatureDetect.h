@@ -19,8 +19,8 @@ public:
 	virtual ~FeatureDetect();
 
 public:
-	OrbFeatureDetector feature_detector;
-	OrbDescriptorExtractor feature_extractor;
+//	OrbFeatureDetector feature_detector;
+//	OrbDescriptorExtractor feature_extractor;
 	double good_match_threshold;
 	int min_inliers;
 	double keyframe_threshold;

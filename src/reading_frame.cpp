@@ -131,6 +131,7 @@ int main()//int main()
 	PointCloud::Ptr cloud;
 	PointCloud::Ptr output(new PointCloud());
 
+	std::vector<RGBDFrame::Ptr> keyframes;
 
 	FeatureDetect fd;
 	Transform tf;
@@ -147,13 +148,16 @@ int main()//int main()
 
 	old_frame = fr.next();
 	fd.Detect_orb(old_frame);
+	keyframes.push_back(old_frame);
+	ferns.addFrame(old_frame, 0.4);
+
 	Eigen::Matrix3d m;
 	tf.Matrix9ToQuaternion(m);
 
 	cloud = image2PointCloud(old_frame->rgb, old_frame->depth, camera);
 //	pcl::visualization::CloudViewer viewer("Cloud viewer");
 
-
+/*
     while( RGBDFrame::Ptr frame = fr.next() )
     {
     	ferns.addFrame(frame, 0.4);
@@ -161,20 +165,26 @@ int main()//int main()
     }
     cout << "end" << endl;
     cout << ferns.frames.size() << endl;
-    while( RGBDFrame::Ptr frame = fr.next())
+    */
+    while( RGBDFrame::Ptr frame = fr.next())//time 17-32误差极大
     {
 //    	break;
     	fd.Detect_orb(frame);
-    	fd.Match_orb(old_frame, frame, frame->camera);
+    	result = fd.Match_orb(old_frame, frame, camera);//frame->camera);
+ //   	cout << frame->id << endl;
+ //   	cout << fd.Key_Frame_Judge(result) << endl;
     	Mat temp;
     	drawKeypoints(frame->rgb, frame->keypoints, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
         cv::imshow( "image", temp);//frame->rgb );
         cv::waitKey(1);
 
-        result = fd.Match_orb(old_frame, frame, camera);
-        cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+ //       result = fd.Match_orb(old_frame, frame, camera);
+//        cout << fd.Key_Frame_Judge(result) << endl;
+//        cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
         if(!fd.Key_Frame_Judge(result)) {
-//            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+            keyframes.push_back(frame);
+        	ferns.addFrame(frame, 0.4);
         	tf.GetFrameTransform(*frame, *old_frame, result);
  //       	cout << fr.rgbFiles[frame->id] << endl;
         	fr.FrameWriter(*frame);
@@ -189,6 +199,25 @@ int main()//int main()
   //      	q = tf.Matrix16ToQuaternion(T);
   //      	cout << frame->translation << endl;
  //       	tf.PrintQuar(frame->rotation);
+        }
+/*        else if(fd.Key_Frame_Judge(result)==3 && fd.Key_Frame_Judge(fd.Match_orb(keyframes.at(ferns.findFrame(frame)), frame, camera))==0) {
+        	cout << "find pnp" << endl;
+        }*/
+        else if(fd.Key_Frame_Judge(result) == 3) {
+        	cout << "relocalization" << "  id:" << frame->id << endl;
+ //       	cout <<ferns.findFrame(frame)<< endl;
+        	int temp = ferns.findFrame(frame);
+        	result = fd.Match_orb(keyframes.at(temp), frame, camera);
+        	if(!fd.Key_Frame_Judge(result)) {
+        		cout << "find pnp" << endl;
+        		//add key frame
+            	tf.GetFrameTransform(*frame, *keyframes.at(temp), result);
+                keyframes.push_back(frame);
+            	ferns.addFrame(frame, 0.4);
+            	fr.FrameWriter(*frame);
+        	}
+        	else
+        		continue;
         }
         else
         	continue;

@@ -2,8 +2,10 @@
 # 起始索引
 start_index=1
 # 数据所在目录
-data_source=/home/wei/slam/rgbd_dataset_freiburg1_room/
+#data_source=/home/wei/slam/rgbd_dataset_freiburg1_room/
 #data_source=/home/wei/slam/rgbd_dataset_freiburg1_floor/
+data_source=/home/wei/slam/rgbd_dataset_freiburg1_desk/
+#data_source=/home/wei/slam/rgbd_dataset_freiburg1_desk2/
 # 相机内参
 
 camera.cx=318.6

@@ -12,7 +12,7 @@ FeatureDetect::FeatureDetect() {
 	good_match_threshold = 4.0;
 	min_inliers = 5;
 	keyframe_threshold = 0.1;
-	max_norm = 0.3;
+	max_norm = 0.4;
 }
 
 FeatureDetect::~FeatureDetect() {
@@ -20,12 +20,15 @@ FeatureDetect::~FeatureDetect() {
 }
 
 void FeatureDetect::Detect_orb(RGBDFrame::Ptr& frame) {
+	OrbFeatureDetector feature_detector(300);
+	OrbDescriptorExtractor feature_extractor;
 //	ORB orb;
 //	orb(frame->rgb, Mat(), frame->keypoints, frame->descriptor);
 	Mat grayimage;
 	cvtColor(frame->rgb, grayimage, CV_BGR2GRAY);
 	feature_detector.detect(grayimage, frame->keypoints);
 	feature_extractor.compute(grayimage, frame->keypoints, frame->descriptor);
+//	cout << "size" << frame->keypoints.size() << endl;
 }
 
 void FeatureDetect::Detect_sift(RGBDFrame::Ptr& frame) {

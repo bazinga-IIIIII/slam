@@ -24,7 +24,8 @@ public:
 
     bool addFrame(RGBDFrame::Ptr frame, const float threshold);
 
-    Eigen::Matrix4f findFrame(RGBDFrame::Ptr frame);
+//    Eigen::Matrix4f findFrame(RGBDFrame::Ptr frame);
+    int findFrame(RGBDFrame::Ptr frame);
 
     class Fern
     {
