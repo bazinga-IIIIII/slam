@@ -137,17 +137,11 @@ int main()//int main()
 	Transform tf;
 	Ferns ferns(500, 7000, 0.2);//500颗随机蕨。深度值上限7000mm。阈值0.2
 
-//	ferns.Ferns;
-/*
-	cout << "init ferns successed!" << endl;
-	cout << ferns.conservatory.at(100).pos << endl;
-	cout << ferns.conservatory.at(100).rgbd << endl;
-	cout << ferns.conservatory.at(200).pos << endl;
-	cout << ferns.conservatory.at(200).rgbd << endl;
-*/
 
 	old_frame = fr.next();
-	fd.Detect_orb(old_frame);
+//	fd.Detect_orb(old_frame);
+	fd.Detect_surf(old_frame);
+//	fd.Detect_surf_block(old_frame);
 	keyframes.push_back(old_frame);
 	ferns.addFrame(old_frame, 0.4);
 
@@ -157,48 +151,34 @@ int main()//int main()
 	cloud = image2PointCloud(old_frame->rgb, old_frame->depth, camera);
 //	pcl::visualization::CloudViewer viewer("Cloud viewer");
 
-/*
-    while( RGBDFrame::Ptr frame = fr.next() )
-    {
-    	ferns.addFrame(frame, 0.4);
- //   	cout << "frame" << endl;
-    }
-    cout << "end" << endl;
-    cout << ferns.frames.size() << endl;
-    */
+
     while( RGBDFrame::Ptr frame = fr.next())//time 17-32误差极大
     {
 //    	break;
-    	fd.Detect_orb(frame);
-    	result = fd.Match_orb(old_frame, frame, camera);//frame->camera);
+
+//    	fd.Detect_orb(frame);
+//    	result = fd.Match_orb(old_frame, frame, camera);//frame->camera);
+    	fd.Detect_surf(frame);
+//    	fd.Detect_surf_block(frame);
+    	result = fd.Match_surf(old_frame, frame, camera);//frame->camera);
+//    	result = fd.Block_match(old_frame, frame, camera);//frame->camera);
+
  //   	cout << frame->id << endl;
  //   	cout << fd.Key_Frame_Judge(result) << endl;
-    	Mat temp;
-    	drawKeypoints(frame->rgb, frame->keypoints, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-        cv::imshow( "image", temp);//frame->rgb );
-        cv::waitKey(1);
+ //   	Mat temp;
+//    	drawKeypoints(frame->rgb, frame->keypoints, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
+ //       cv::imshow( "image", temp);//frame->rgb );
+  //      cv::waitKey(1);
 
  //       result = fd.Match_orb(old_frame, frame, camera);
 //        cout << fd.Key_Frame_Judge(result) << endl;
-//        cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+        cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
         if(!fd.Key_Frame_Judge(result)) {
-            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
+//            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
             keyframes.push_back(frame);
         	ferns.addFrame(frame, 0.4);
         	tf.GetFrameTransform(*frame, *old_frame, result);
- //       	cout << fr.rgbFiles[frame->id] << endl;
         	fr.FrameWriter(*frame);
- //           cout << rgbFiles[currentIndex] << endl;
- //       	tf.PrintQuar(frame->rotation);
-  //      	cout << frame->translation << endl;
- //       	Eigen::Matrix4d temp = tf.PnpoutputToMatrix4d(result);
- //       	frame->rotation = tf.Matrix16ToQuaternion(temp);
-//        	cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
- //       	T = tf.PnpoutputToIsometry(result);
- //       	tf.IsometryToMatrix4d(T);
-  //      	q = tf.Matrix16ToQuaternion(T);
-  //      	cout << frame->translation << endl;
- //       	tf.PrintQuar(frame->rotation);
         }
 /*        else if(fd.Key_Frame_Judge(result)==3 && fd.Key_Frame_Judge(fd.Match_orb(keyframes.at(ferns.findFrame(frame)), frame, camera))==0) {
         	cout << "find pnp" << endl;
@@ -207,7 +187,9 @@ int main()//int main()
         	cout << "relocalization" << "  id:" << frame->id << endl;
  //       	cout <<ferns.findFrame(frame)<< endl;
         	int temp = ferns.findFrame(frame);
-        	result = fd.Match_orb(keyframes.at(temp), frame, camera);
+//        	result = fd.Match_orb(keyframes.at(temp), frame, camera);
+        	result = fd.Match_surf(keyframes.at(temp), frame, camera);
+//        	result = fd.Block_match(keyframes.at(temp), frame, camera);
         	if(!fd.Key_Frame_Judge(result)) {
         		cout << "find pnp" << endl;
         		//add key frame
@@ -240,9 +222,29 @@ int main()//int main()
         old_frame->rotation = frame->rotation;
         old_frame->translation = frame->translation;
         old_frame->descriptor = frame->descriptor.clone();
+        old_frame->descriptor1 = frame->descriptor1.clone();
+        old_frame->descriptor2 = frame->descriptor2.clone();
+        old_frame->descriptor3 = frame->descriptor3.clone();
+        old_frame->descriptor4 = frame->descriptor4.clone();
        	old_frame->keypoints.clear();
+       	old_frame->keypoints1.clear();
+       	old_frame->keypoints2.clear();
+       	old_frame->keypoints3.clear();
+       	old_frame->keypoints4.clear();
        	for(int i = 0; i < frame->keypoints.size(); i++) {
        		old_frame->keypoints.push_back(frame->keypoints[i]);
+        }
+       	for(int i = 0; i < frame->keypoints1.size(); i++) {
+       		old_frame->keypoints1.push_back(frame->keypoints1[i]);
+        }
+       	for(int i = 0; i < frame->keypoints2.size(); i++) {
+       		old_frame->keypoints2.push_back(frame->keypoints2[i]);
+        }
+       	for(int i = 0; i < frame->keypoints3.size(); i++) {
+       		old_frame->keypoints3.push_back(frame->keypoints3[i]);
+        }
+       	for(int i = 0; i < frame->keypoints4.size(); i++) {
+       		old_frame->keypoints4.push_back(frame->keypoints4[i]);
         }
     }
 

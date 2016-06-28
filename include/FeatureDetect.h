@@ -30,9 +30,11 @@ public:
 	void Detect_orb(RGBDFrame::Ptr& frame);
 	void Detect_sift(RGBDFrame::Ptr& frame);
 	void Detect_surf(RGBDFrame::Ptr& frame);
+	void Detect_surf_block(RGBDFrame::Ptr& frame);
 	RESULT_OF_PNP Match_orb(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam);
 	RESULT_OF_PNP Match_sift(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam);
 	RESULT_OF_PNP Match_surf(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam);
+	RESULT_OF_PNP Block_match(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam);
 	int Key_Frame_Judge(RESULT_OF_PNP result_of_pnp);
 
 public:
