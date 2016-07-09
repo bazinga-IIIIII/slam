@@ -39,7 +39,7 @@
 #include <g2o/core/marginal_covariance_cholesky.h>
 
 #include <Ferns.h>
-
+#include <time.h>
 
 
 using namespace rgbd_tutor;
@@ -136,54 +136,124 @@ int main()//int main()
 	FeatureDetect fd;
 	Transform tf;
 	Ferns ferns(500, 7000, 0.2);//500颗随机蕨。深度值上限7000mm。阈值0.2
+	int track_flag = 0;
+	int you_know_nothing = 0;
 
+	int start_time, end_time;
+	double avg_time;
+	time_t tt = time(NULL);//这句返回的只是一个时间戳
+	tm* t= localtime(&tt);
+	printf("start time %02d:%02d:%02d\n", t->tm_hour, t->tm_min, t->tm_sec);
+	start_time = t->tm_hour*3600 + t->tm_min*60 +t->tm_sec;
 
 	old_frame = fr.next();
+
 //	fd.Detect_orb(old_frame);
 	fd.Detect_surf(old_frame);
+//	fd.Detect_sift(old_frame);
 //	fd.Detect_surf_block(old_frame);
+
 	keyframes.push_back(old_frame);
 	ferns.addFrame(old_frame, 0.4);
+
+	cout << old_frame->keypoints.size() << endl;
 
 	Eigen::Matrix3d m;
 	tf.Matrix9ToQuaternion(m);
 
-	cloud = image2PointCloud(old_frame->rgb, old_frame->depth, camera);
+//	cloud = image2PointCloud(old_frame->rgb, old_frame->depth, camera);
 //	pcl::visualization::CloudViewer viewer("Cloud viewer");
-
+/*
+    while( RGBDFrame::Ptr frame = fr.next())//time 17-32误差极大
+    {
+//    	fd.Detect_orb(frame);
+    	fd.Detect_surf(frame);
+//    	fd.Detect_sift(frame);
+    	cout << frame->keypoints.size() << endl;
+    }*/
 
     while( RGBDFrame::Ptr frame = fr.next())//time 17-32误差极大
     {
-//    	break;
-
 //    	fd.Detect_orb(frame);
 //    	result = fd.Match_orb(old_frame, frame, camera);//frame->camera);
     	fd.Detect_surf(frame);
-//    	fd.Detect_surf_block(frame);
     	result = fd.Match_surf(old_frame, frame, camera);//frame->camera);
+//    	fd.Detect_sift(frame);
+//    	result = fd.Match_surf(old_frame, frame, camera);//frame->camera);
+//    	fd.Detect_surf_block(frame);
 //    	result = fd.Block_match(old_frame, frame, camera);//frame->camera);
 
  //   	cout << frame->id << endl;
  //   	cout << fd.Key_Frame_Judge(result) << endl;
  //   	Mat temp;
-//    	drawKeypoints(frame->rgb, frame->keypoints, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
+ //   	drawKeypoints(frame->rgb, frame->keypoints, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
  //       cv::imshow( "image", temp);//frame->rgb );
-  //      cv::waitKey(1);
+ //       cv::waitKey(1);
 
  //       result = fd.Match_orb(old_frame, frame, camera);
 //        cout << fd.Key_Frame_Judge(result) << endl;
-        cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
-        if(!fd.Key_Frame_Judge(result)) {
+    	int vo_result = fd.Key_Frame_Judge(result);
+        cout << frame->id << "  " << vo_result << endl;
+        switch(vo_result) {
+        case 0 :
+        	keyframes.push_back(frame);
+        	ferns.addFrame(frame, 0.4);
+        	tf.GetFrameTransform(*frame, *old_frame, result);
+        	fr.FrameWriter(*frame);
+        	track_flag = 0;
+        	you_know_nothing = 0;
+        	break;
+        case 1:
+        	track_flag ++;
+        	break;
+        case 2:
+        	you_know_nothing ++;
+        	break;
+        case 3:
+        	track_flag += 2;
+        	break;
+        default: cout << "Error!" << endl;
+        }
+
+        if(track_flag > 10) {
+        	cout << "relocalization" << "  id:" << frame->id << endl;
+ //       	cout <<ferns.findFrame(frame)<< endl;
+        	int temp = ferns.findFrame(frame);
+        	cout << "match frame: " << keyframes.at(temp)->id << endl;
+//        	result = fd.Match_orb(keyframes.at(temp), frame, camera);
+        	result = fd.Match_surf(keyframes.at(temp), frame, camera);
+//        	result = fd.Block_match(keyframes.at(temp), frame, camera);
+   //     	cv::waitKey(500);
+        	if(!fd.Key_Frame_Judge(result)) {
+        		cout << "Find pnp!  Relocalization success!" << endl;
+        		//add key frame
+            	tf.GetFrameTransform(*frame, *keyframes.at(temp), result);
+                keyframes.push_back(frame);
+            	ferns.addFrame(frame, 0.4);
+            	fr.FrameWriter(*frame);
+            	track_flag = 0;
+            	you_know_nothing = 0;
+        	}
+        	else {
+        		cout << "Relocalization faild!" << endl;
+        		continue;
+        	}
+        }
+        else if(track_flag > 0 && track_flag < 10)
+        	continue;
+
+        if(you_know_nothing)
+        	continue;
+/*
+        if(vo_result == 0) {
 //            cout << frame->id << "  " << fd.Key_Frame_Judge(result) << endl;
             keyframes.push_back(frame);
         	ferns.addFrame(frame, 0.4);
         	tf.GetFrameTransform(*frame, *old_frame, result);
         	fr.FrameWriter(*frame);
+        	track_flag = 0;
         }
-/*        else if(fd.Key_Frame_Judge(result)==3 && fd.Key_Frame_Judge(fd.Match_orb(keyframes.at(ferns.findFrame(frame)), frame, camera))==0) {
-        	cout << "find pnp" << endl;
-        }*/
-        else if(fd.Key_Frame_Judge(result) == 3) {
+        else if(vo_result == 3) {
         	cout << "relocalization" << "  id:" << frame->id << endl;
  //       	cout <<ferns.findFrame(frame)<< endl;
         	int temp = ferns.findFrame(frame);
@@ -203,7 +273,7 @@ int main()//int main()
         }
         else
         	continue;
-
+*/
 
  /*   //		cloud2 = image2PointCloud(dst.rgb, dst.depth, cam_params);
     		//cout << result.rvec << endl;
@@ -222,18 +292,19 @@ int main()//int main()
         old_frame->rotation = frame->rotation;
         old_frame->translation = frame->translation;
         old_frame->descriptor = frame->descriptor.clone();
+       	old_frame->keypoints.clear();
+       	for(int i = 0; i < frame->keypoints.size(); i++) {
+       		old_frame->keypoints.push_back(frame->keypoints[i]);
+        }
+       	/*
         old_frame->descriptor1 = frame->descriptor1.clone();
         old_frame->descriptor2 = frame->descriptor2.clone();
         old_frame->descriptor3 = frame->descriptor3.clone();
         old_frame->descriptor4 = frame->descriptor4.clone();
-       	old_frame->keypoints.clear();
        	old_frame->keypoints1.clear();
        	old_frame->keypoints2.clear();
        	old_frame->keypoints3.clear();
        	old_frame->keypoints4.clear();
-       	for(int i = 0; i < frame->keypoints.size(); i++) {
-       		old_frame->keypoints.push_back(frame->keypoints[i]);
-        }
        	for(int i = 0; i < frame->keypoints1.size(); i++) {
        		old_frame->keypoints1.push_back(frame->keypoints1[i]);
         }
@@ -245,9 +316,16 @@ int main()//int main()
         }
        	for(int i = 0; i < frame->keypoints4.size(); i++) {
        		old_frame->keypoints4.push_back(frame->keypoints4[i]);
-        }
+        }*/
     }
 
+	time_t tt1 = time(NULL);//这句返回的只是一个时间戳
+	tm* t1= localtime(&tt1);
+	printf("end time %02d:%02d:%02d\n", t1->tm_hour, t1->tm_min, t1->tm_sec);
+	end_time = t1->tm_hour*3600 + t1->tm_min*60 +t1->tm_sec;
+	avg_time = (double)(end_time - start_time)/fr.rgbFiles.size();
+	printf("diff: %d  %d\n",start_time, end_time);
+	printf("average time: %lf\n",avg_time);
     return 0;
 }
 

@@ -12,7 +12,8 @@ FeatureDetect::FeatureDetect() {
 	good_match_threshold = 4.0;
 	min_inliers = 5;
 	keyframe_threshold = 0.1;
-	max_norm = 0.4;
+	max_norm = 0.5;
+
 }
 
 FeatureDetect::~FeatureDetect() {
@@ -20,7 +21,7 @@ FeatureDetect::~FeatureDetect() {
 }
 
 void FeatureDetect::Detect_orb(RGBDFrame::Ptr& frame) {
-	OrbFeatureDetector feature_detector(300);
+	OrbFeatureDetector feature_detector(500);
 	OrbDescriptorExtractor feature_extractor;
 //	ORB orb;
 //	orb(frame->rgb, Mat(), frame->keypoints, frame->descriptor);
@@ -41,12 +42,12 @@ void FeatureDetect::Detect_sift(RGBDFrame::Ptr& frame) {
 
 void FeatureDetect::Detect_surf(RGBDFrame::Ptr& frame) {
 
-	SurfFeatureDetector detector(300);
+	SurfFeatureDetector detector(300,1);
 	detector.detect( frame->rgb, frame->keypoints );
 	SurfDescriptorExtractor extractor;
 	extractor.compute( frame->rgb, frame->keypoints, frame->descriptor );
 }
-
+/*
 void FeatureDetect::Detect_surf_block(RGBDFrame::Ptr& frame) {
 
 	SurfFeatureDetector detector(100);
@@ -80,16 +81,8 @@ void FeatureDetect::Detect_surf_block(RGBDFrame::Ptr& frame) {
 		frame->keypoints4.at(i).pt.x += 320;
 		frame->keypoints4.at(i).pt.y += 240;
 	}
-/*	Mat temp0, temp;
-	drawKeypoints(frame->rgb, frame->keypoints, temp0, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-	drawKeypoints(frame->rgb, frame->keypoints1, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-	drawKeypoints(temp, frame->keypoints2, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-	drawKeypoints(temp, frame->keypoints3, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-	drawKeypoints(temp, frame->keypoints4, temp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
-    imshow("temp0",temp0);
-    imshow("temp",temp);
-    cv::waitKey(1);*/
-}
+
+}*/
 
 RESULT_OF_PNP FeatureDetect::Match_orb(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam) {
 
@@ -144,6 +137,7 @@ RESULT_OF_PNP FeatureDetect::Match_orb(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst,
 	Mat img_matches;
     drawMatches(src->rgb,src->keypoints,dst->rgb,dst->keypoints,matches,img_matches);
     imshow("matches",img_matches);
+    cv::waitKey(1);
 
 	double camera_matrix_data[3][3] = {
 		{ cam.fx, 0, cam.cx },
@@ -238,7 +232,7 @@ RESULT_OF_PNP FeatureDetect::Match_surf(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst
 
 	return result;
 }
-
+/*
 RESULT_OF_PNP FeatureDetect::Block_match(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam) {
 
 	cout << "hello" << endl;
@@ -402,7 +396,7 @@ RESULT_OF_PNP FeatureDetect::Block_match(RGBDFrame::Ptr& src, RGBDFrame::Ptr& ds
 
 
 	return result;
-}
+}*/
 
 int FeatureDetect::Key_Frame_Judge(RESULT_OF_PNP result_of_pnp) {
 	if(result_of_pnp.inliers < min_inliers)

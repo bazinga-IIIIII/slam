@@ -66,16 +66,16 @@ public:
     Eigen::Isometry3d       T=Eigen::Isometry3d::Identity();
 
     // 特征
-    vector<cv::KeyPoint>    keypoints;
+    vector<cv::KeyPoint>    keypoints;/*
     vector<cv::KeyPoint>    keypoints1;
     vector<cv::KeyPoint>    keypoints2;
     vector<cv::KeyPoint>    keypoints3;
-    vector<cv::KeyPoint>    keypoints4;
-    cv::Mat                 descriptor;
+    vector<cv::KeyPoint>    keypoints4;*/
+    cv::Mat                 descriptor;/*
     cv::Mat                 descriptor1;
     cv::Mat                 descriptor2;
     cv::Mat                 descriptor3;
-    cv::Mat                 descriptor4;
+    cv::Mat                 descriptor4;*/
     vector<cv::Point3f>     kps_3d;
     Eigen::Vector3d         translation = Eigen::Vector3d::Zero();
     Eigen::Quaterniond      rotation = Eigen::Quaterniond::Identity();
@@ -94,6 +94,7 @@ public:
 class FrameReader
 {
 public:
+	vector<string>  rgbFiles, depthFiles;
 	vector<string>  rgbTimes, depthTimes;
 	void FrameWriter(RGBDFrame frame);
 	FILE *fp;
@@ -139,7 +140,7 @@ protected:
     const   ParameterReader&    parameterReader;
 
     // 文件名序列
-    vector<string>  rgbFiles, depthFiles;
+//    vector<string>  rgbFiles, depthFiles;
 
     // 数据源
     string  dataset_dir;
