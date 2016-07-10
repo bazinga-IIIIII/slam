@@ -38,6 +38,7 @@ public:
 	RESULT_OF_PNP Match_surf(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam);
 	RESULT_OF_PNP Block_match(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam);
 	int Key_Frame_Judge(RESULT_OF_PNP result_of_pnp);
+	double Key_Frame_Local(RESULT_OF_PNP result_of_pnp);
 
 public:
 	double normofTransform(cv::Mat rvec, cv::Mat tvec) {

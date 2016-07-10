@@ -215,7 +215,53 @@ int main()//int main()
         default: cout << "Error!" << endl;
         }
 
-        if(track_flag > 10) {
+        if(track_flag > 15) {
+        	cout << "start" << endl;
+//        	int *p = new int[5];
+        	int p[5] = {-1, -1, -1, -1, -1};
+        	ferns.findFrame_k(frame, p);
+        	cout << "keyframes size:" << keyframes.size() << endl;
+        	cout << "relocalization" << "  id:" << frame->id << endl;
+        	cout << "find match:"<<p[0]<<" "<<p[1]<<" "<<p[2]<<" "<<p[3]<<" "<<p[4]<<endl;
+
+
+        	double min_diss = 1.0;
+        	int temp_flag_pnp = -1;
+        	RESULT_OF_PNP temp_res_pnp;
+        	double temp_norm_pnp = 1.0;
+        	for(int i=0; i< 5; i++) {
+        		if(p[i] != -1) {
+        			RESULT_OF_PNP temp_pnp;
+        			temp_pnp = fd.Match_surf(keyframes.at(p[i]), frame, camera);
+        			if(fd.Key_Frame_Local(temp_pnp) < min_diss) {
+        				min_diss = fd.Key_Frame_Local(temp_pnp);
+        				temp_flag_pnp = p[i];
+        				temp_res_pnp = temp_pnp;
+        				temp_norm_pnp = min_diss;
+        			}
+        		}
+        	}
+        	cout << "best match:" << temp_flag_pnp << endl;
+        	if(temp_norm_pnp < 0.3 && temp_res_pnp.inliers > 5) {
+   //     		temp_res_pnp = fd.Match_surf(keyframes.at(temp_flag_pnp), frame, camera);
+   //     		imshow("image1",frame->rgb);
+   //     		imshow("image2",keyframes.at(temp_flag_pnp)->rgb);
+   //     		cv::waitKey(10000);
+        		cout << "Find pnp!  Relocalization success!" << endl;
+        		//add key frame
+            	tf.GetFrameTransform(*frame, *keyframes.at(temp_flag_pnp), temp_res_pnp);
+                keyframes.push_back(frame);
+            	ferns.addFrame(frame, 0.4);
+            	cout << "time:" << fr.depthTimes[frame->id].c_str() << endl;
+            	fr.FrameWriter(*frame);
+            	track_flag = 0;
+            	you_know_nothing = 0;
+        	}
+        	else {
+        		cout << "Relocalization faild!" << endl;
+        		continue;
+        	}
+/*
         	cout << "relocalization" << "  id:" << frame->id << endl;
  //       	cout <<ferns.findFrame(frame)<< endl;
         	int temp = ferns.findFrame(frame);
@@ -237,7 +283,7 @@ int main()//int main()
         	else {
         		cout << "Relocalization faild!" << endl;
         		continue;
-        	}
+        	}*/
         }
         else if(track_flag > 0 && track_flag < 10)
         	continue;

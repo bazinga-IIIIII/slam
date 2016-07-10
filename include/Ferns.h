@@ -26,6 +26,7 @@ public:
 
 //    Eigen::Matrix4f findFrame(RGBDFrame::Ptr frame);
     int findFrame(RGBDFrame::Ptr frame);
+    void findFrame_k(RGBDFrame::Ptr frame, int a[5]);
 
     class Fern
     {

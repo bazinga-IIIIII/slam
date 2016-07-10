@@ -201,7 +201,83 @@ int Ferns::findFrame(RGBDFrame::Ptr i_frame)
 //    delete frame;
 }
 
+void Ferns::findFrame_k(RGBDFrame::Ptr i_frame, int a[5])
+{
+//	int a[5] = {-1,-1,-1,-1,-1};
 
+    lastClosest = -1;
+    Frame * frame = new Frame(num, frames.size(), i_frame->id);
+
+    int * coOccurrences = new int[frames.size()];
+    memset(coOccurrences, 0, sizeof(int) * frames.size());
+
+    for(int i = 0; i < num; i++)
+    {
+        unsigned char code = badCode;
+
+        int row = conservatory.at(i).pos(1);
+        int col = conservatory.at(i).pos(0);
+        if(i_frame->depth.at<short>(row, col) >0) {
+	    //将pos点的rgb值赋给pix
+            code = (i_frame->rgb.at<cv::Vec3b>(row, col)[0] > conservatory.at(i).rgbd(0)) << 3 |
+                   (i_frame->rgb.at<cv::Vec3b>(row, col)[1] > conservatory.at(i).rgbd(1)) << 2 |
+                   (i_frame->rgb.at<cv::Vec3b>(row, col)[2] > conservatory.at(i).rgbd(2)) << 1 |
+                   (i_frame->depth.at<short>(row, col) > conservatory.at(i).rgbd(3));
+
+            frame->goodCodes++;
+
+            for(size_t j = 0; j < conservatory.at(i).ids[code].size(); j++)
+            {
+                coOccurrences[conservatory.at(i).ids[code].at(j)]++;
+            }
+        }
+
+        frame->codes[i] = code;
+    }
+
+//    int minId = -1;
+
+    std::vector<Frame*> frames_temp;
+    for(int i=0; i < frames.size()-1; i++)
+    	frames_temp.push_back(frames.at(i));
+
+    cout << "find match id1:"<<a[0]<<" "<<a[1]<<" "<<a[2]<<" "<<a[3]<<" "<<a[4]<<endl;
+    for(int i=0; i < 5; i++) {
+    	float minimum = std::numeric_limits<float>::max();
+    	for(int j=0; j < frames_temp.size(); j++) {
+            float maxCo = std::min(frame->goodCodes, frames_temp.at(j)->goodCodes);
+            float dissim = (float)(maxCo - coOccurrences[j]) / (float)maxCo;
+            if(dissim < minimum ) {
+                minimum = dissim;
+                a[i] = j;
+            }
+    	}
+    	coOccurrences[a[i]] = 0;
+ //   	frames_temp.at(a[i])->goodCodes = -1;
+    }
+    cout << "find match id2:"<<a[0]<<" "<<a[1]<<" "<<a[2]<<" "<<a[3]<<" "<<a[4]<<endl;
+    if(frames_temp.size() < 5)
+    	for(int i=0; i<5-frames_temp.size(); i++)
+    		a[frames_temp.size()+i] = -1;
+
+    delete [] coOccurrences;
+
+	cout << "find match id3:"<<a[0]<<" "<<a[1]<<" "<<a[2]<<" "<<a[3]<<" "<<a[4]<<endl;
+    for(int i=0; i < 5; i++) {
+    	if(a[i] != -1 && blockHDAware(frame, frames.at(a[i])) <= 0.3)
+    		a[i] = -1;
+    }
+	cout << "find match id4:"<<a[0]<<" "<<a[1]<<" "<<a[2]<<" "<<a[3]<<" "<<a[4]<<endl;
+//    for(size_t i = 0; i < frames_temp.size(); i++)
+//    {
+//        delete frames_temp.at(i);
+//    }
+	frames_temp.clear();
+    delete frame;
+
+//    cout << "find match id:"<<a[0]<<" "<<a[1]<<" "<<a[2]<<" "<<a[3]<<" "<<a[4]<<endl;
+ //   return a;
+}
 
 float Ferns::blockHDAware(const Frame * f1, const Frame * f2)
 {

@@ -410,3 +410,11 @@ int FeatureDetect::Key_Frame_Judge(RESULT_OF_PNP result_of_pnp) {
 
 	return 0;
 }
+
+double FeatureDetect::Key_Frame_Local(RESULT_OF_PNP result_of_pnp) {
+	double norm = normofTransform(result_of_pnp.rvec, result_of_pnp.tvec);
+	if(norm > max_norm)
+		return 1;
+	else
+		return norm;
+}
