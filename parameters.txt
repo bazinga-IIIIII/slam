@@ -6,7 +6,8 @@ start_index=1
 #data_source=/home/wei/slam/rgbd_dataset_freiburg1_floor/
 data_source=/home/wei/slam/rgbd_dataset_freiburg1_desk/
 #data_source=/home/wei/slam/rgbd_dataset_freiburg1_desk2/
-#data_source=/home/wei/slam/rgbd_dataset_freiburg1_desk3/
+#data_source=/home/wei/slam/rgbd_dataset_freiburg1_desk1-1/
+#data_source=/home/wei/slam/rgbd_dataset_freiburg1_desk1-2/
 
 # 相机内参
 camera.cx=318.6

@@ -229,7 +229,7 @@ int main()//int main()
         	int temp_flag_pnp = -1;
         	RESULT_OF_PNP temp_res_pnp;
         	double temp_norm_pnp = 1.0;
-        	for(int i=0; i< 5; i++) {
+/*        	for(int i=0; i< 5; i++) {
         		if(p[i] != -1) {
         			RESULT_OF_PNP temp_pnp;
         			temp_pnp = fd.Match_surf(keyframes.at(p[i]), frame, camera);
@@ -240,9 +240,24 @@ int main()//int main()
         				temp_norm_pnp = min_diss;
         			}
         		}
+        	}*/
+        	int max_inliers = 5;
+        	for(int i=0; i< 5; i++) {
+        		if(p[i] != -1) {
+        			RESULT_OF_PNP temp_pnp;
+        			temp_pnp = fd.Match_surf(keyframes.at(p[i]), frame, camera);
+        			if(temp_pnp.inliers > 5) {
+        				max_inliers = temp_pnp.inliers;
+        				temp_flag_pnp = p[i];
+        				temp_norm_pnp = fd.Key_Frame_Local(temp_pnp);
+        				temp_res_pnp = temp_pnp;
+        			}
+
+        		}
         	}
         	cout << "best match:" << temp_flag_pnp << endl;
-        	if(temp_norm_pnp < 0.3 && temp_res_pnp.inliers > 5) {
+        	if(temp_norm_pnp < 0.4) {
+    //    	if(temp_norm_pnp < 0.4 && temp_res_pnp.inliers > 5) {
    //     		temp_res_pnp = fd.Match_surf(keyframes.at(temp_flag_pnp), frame, camera);
    //     		imshow("image1",frame->rgb);
    //     		imshow("image2",keyframes.at(temp_flag_pnp)->rgb);
