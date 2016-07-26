@@ -177,7 +177,7 @@ int main()//int main()
 //    	fd.Detect_orb(frame);
 //    	result = fd.Match_orb(old_frame, frame, camera);//frame->camera);
     	fd.Detect_surf(frame);
-    	result = fd.Match_surf(old_frame, frame, camera);//frame->camera);
+    	result = fd.Match_surf_ransac(old_frame, frame, camera);//frame->camera);
 //    	fd.Detect_sift(frame);
 //    	result = fd.Match_surf(old_frame, frame, camera);//frame->camera);
 //    	fd.Detect_surf_block(frame);
@@ -245,7 +245,7 @@ int main()//int main()
         	for(int i=0; i< 5; i++) {
         		if(p[i] != -1) {
         			RESULT_OF_PNP temp_pnp;
-        			temp_pnp = fd.Match_surf(keyframes.at(p[i]), frame, camera);
+        			temp_pnp = fd.Match_surf_ransac(keyframes.at(p[i]), frame, camera);
         			if(temp_pnp.inliers > 5) {
         				max_inliers = temp_pnp.inliers;
         				temp_flag_pnp = p[i];

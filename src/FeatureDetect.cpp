@@ -213,7 +213,7 @@ RESULT_OF_PNP FeatureDetect::Match_surf(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst
 	Mat img_matches;
     drawMatches(src->rgb,src->keypoints,dst->rgb,dst->keypoints,matches,img_matches);
     imshow("matches",img_matches);
-    cv::waitKey(1);
+    cv::waitKey(10);
 
 	double camera_matrix_data[3][3] = {
 		{ cam.fx, 0, cam.cx },
@@ -232,6 +232,174 @@ RESULT_OF_PNP FeatureDetect::Match_surf(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst
 
 	return result;
 }
+
+RESULT_OF_PNP FeatureDetect::Match_surf_ransac(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam) {
+
+	RESULT_OF_PNP result;
+	vector< cv::DMatch > matches;
+	FlannBasedMatcher matcher;
+	matcher.match(src->descriptor, dst->descriptor, matches);
+
+	// 分配空间
+	int ptCount = (int)matches.size();
+	Mat p1(ptCount, 2, CV_32F);
+	Mat p2(ptCount, 2, CV_32F);
+
+	// 把Keypoint转换为Mat
+	Point2f pt;
+	for (int i=0; i<ptCount; i++)
+	{
+	     pt = src->keypoints[matches[i].queryIdx].pt;
+	     p1.at<float>(i, 0) = pt.x;
+	     p1.at<float>(i, 1) = pt.y;
+
+	     pt = dst->keypoints[matches[i].trainIdx].pt;
+	     p2.at<float>(i, 0) = pt.x;
+	     p2.at<float>(i, 1) = pt.y;
+	}
+
+	// 用RANSAC方法计算F
+	Mat m_Fundamental;
+	vector<uchar> m_RANSACStatus;
+	m_Fundamental = findFundamentalMat(p1, p2, m_RANSACStatus, FM_RANSAC);
+
+	// 计算野点个数
+	int OutlinerCount = 0;
+	for (int i=0; i<ptCount; i++)
+	{
+	     if (m_RANSACStatus[i] == 0) // 状态为0表示野点
+	     {
+	          OutlinerCount++;
+	     }
+	}
+
+	// 计算内点
+	vector<Point2f> m_LeftInlier;
+	vector<Point2f> m_RightInlier;
+	vector<DMatch> m_InlierMatches;
+	// 上面三个变量用于保存内点和匹配关系
+	int InlinerCount = ptCount - OutlinerCount;
+	m_InlierMatches.resize(InlinerCount);
+	m_LeftInlier.resize(InlinerCount);
+	m_RightInlier.resize(InlinerCount);
+	InlinerCount = 0;
+	for (int i=0; i<ptCount; i++)
+	{
+	     if (m_RANSACStatus[i] != 0)
+	     {
+	          m_LeftInlier[InlinerCount].x = p1.at<float>(i, 0);
+	          m_LeftInlier[InlinerCount].y = p1.at<float>(i, 1);
+	          m_RightInlier[InlinerCount].x = p2.at<float>(i, 0);
+	          m_RightInlier[InlinerCount].y = p2.at<float>(i, 1);
+	          m_InlierMatches[InlinerCount].queryIdx = InlinerCount;
+	          m_InlierMatches[InlinerCount].trainIdx = InlinerCount;
+//	          m_InlierMatches[0].distance
+	          InlinerCount++;
+	     }
+	}
+
+	// 把内点转换为drawMatches可以使用的格式
+	vector<KeyPoint> key1(InlinerCount);
+	vector<KeyPoint> key2(InlinerCount);
+	KeyPoint::convert(m_LeftInlier, key1);
+	KeyPoint::convert(m_RightInlier, key2);
+ /*
+	Mat img_matches;
+//    drawMatches(src->rgb,src->keypoints,dst->rgb,dst->keypoints,matches,img_matches);
+    drawMatches(src->rgb,key1,dst->rgb,key2,m_InlierMatches,img_matches);
+    imshow("matches",img_matches);
+    cv::waitKey(10);
+
+    cout << "hehehehehehehhehehehehehehhehe" << m_InlierMatches.size() << endl;
+
+	vector< cv::DMatch > goodMatches;
+	double minDis = 9999;
+
+	for (size_t i = 0; i<m_InlierMatches.size(); i++)
+	{
+		cout << "hehehehehehehhehehehehehehhehe" << m_InlierMatches[i].distance << endl;
+		if (m_InlierMatches[i].distance < minDis)
+			minDis = m_InlierMatches[i].distance;
+	}
+    cout << "hehehehehehehhehehehehehehhehe" << minDis << endl;
+	for (size_t i = 0; i<m_InlierMatches.size(); i++)
+	{
+		if (m_InlierMatches[i].distance < good_match_threshold*minDis)
+			goodMatches.push_back(m_InlierMatches[i]);
+	}
+    cout << "hehehehehehehhehehehehehehhehe" << goodMatches.size() << endl;
+	if (goodMatches.size() <= 5)
+	{
+		result.inliers = -1;
+		return result;
+	}
+
+	vector<cv::Point3f> pts_src;
+	vector< cv::Point2f > pts_dst;
+	int flag = 0;
+	for (size_t i = 0; i < goodMatches.size(); i++)
+	{
+		cv::Point2f p = key1[goodMatches[i].queryIdx].pt;
+		cv::Point3f pd = src->project2dTo3dLocal1(p.x, p.y, cam);
+		if(pd == cv::Point3f(0,0,0))
+			continue;
+
+		pts_src.push_back(pd);
+		pts_dst.push_back(cv::Point2f(key2[goodMatches[i].trainIdx].pt));
+		flag++;
+	}
+
+	if (flag <= 5)
+	{
+		result.inliers = -1;
+		return result;
+	}*/
+	vector<cv::Point3f> pts_src;
+	vector< cv::Point2f > pts_dst;
+	int flag = 0;
+	for (size_t i = 0; i < m_InlierMatches.size(); i++)
+	{
+		cv::Point2f p = key1[m_InlierMatches[i].queryIdx].pt;
+		cv::Point3f pd = src->project2dTo3dLocal1(p.x, p.y, cam);
+		if(pd == cv::Point3f(0,0,0))
+			continue;
+
+		pts_src.push_back(pd);
+		pts_dst.push_back(cv::Point2f(key2[m_InlierMatches[i].trainIdx].pt));
+		flag++;
+	}
+
+	if (flag <= 5)
+	{
+		result.inliers = -1;
+		return result;
+	}
+
+	Mat img_matches;
+//    drawMatches(src->rgb,src->keypoints,dst->rgb,dst->keypoints,matches,img_matches);
+    drawMatches(src->rgb,key1,dst->rgb,key2,m_InlierMatches,img_matches);
+    imshow("matches",img_matches);
+    cv::waitKey(10);
+
+	double camera_matrix_data[3][3] = {
+		{ cam.fx, 0, cam.cx },
+		{ 0, cam.fy, cam.cy },
+		{ 0, 0, 1 }
+	};
+
+	cv::Mat cameraMatrix(3, 3, CV_64F, camera_matrix_data);
+	cv::Mat rvec, tvec, inliers;
+	cv::solvePnPRansac(pts_src, pts_dst, cameraMatrix, cv::Mat(), rvec, tvec, false, 100, 1.0, 100, inliers);
+
+	result.rvec = rvec;
+	result.tvec = tvec;
+	result.inliers = inliers.rows;
+
+
+	return result;
+}
+
+
 /*
 RESULT_OF_PNP FeatureDetect::Block_match(RGBDFrame::Ptr& src, RGBDFrame::Ptr& dst, CAMERA_INTRINSIC_PARAMETERS cam) {
 
